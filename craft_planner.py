@@ -41,6 +41,15 @@ def make_checker(rule):
     def check(state):
         # This code is called by graph(state) and runs millions of times.
         # Tip: Do something with rule['Consumes'] and rule['Requires'].
+        consumableDic = rule['Consumes']
+        for consumable in consumableDic:
+            required_amount = consumableDic[consumable]
+            if state[consumable] < required_amount:
+                return False
+        requiresDic = rule['Requires']
+        for requirement in requiresDic:
+            if state[requirement] == 0:
+                return False
         return True
 
     return check
@@ -55,6 +64,15 @@ def make_effector(rule):
         # This code is called by graph(state) and runs millions of times
         # Tip: Do something with rule['Produces'] and rule['Consumes'].
         next_state = None
+        next_state = state.copy()
+        productionDic = rule['Produces']
+        for produced_item in productionDic:
+            next_state[produced_item] += productionDic[produced_item]
+
+        consumeDic = rule['Consumes']
+        for consumed_item in consumeDic:
+            next_state[consumed_item] -= consumeDic[consumed_item]
+
         return next_state
 
     return effect
@@ -66,6 +84,7 @@ def make_goal_checker(goal):
 
     def is_goal(state):
         # This code is used in the search process and may be called millions of times.
+        
         return False
 
     return is_goal
@@ -105,16 +124,16 @@ if __name__ == '__main__':
         Crafting = json.load(f)
 
     # # List of items that can be in your inventory:
-    # print('All items:', Crafting['Items'])
-    #
+    print('All items:', Crafting['Items'])
+    
     # # List of items in your initial inventory with amounts:
-    # print('Initial inventory:', Crafting['Initial'])
-    #
+    print('Initial inventory:', Crafting['Initial'])
+    
     # # List of items needed to be in your inventory at the end of the plan:
-    # print('Goal:',Crafting['Goal'])
-    #
+    print('Goal:',Crafting['Goal'])
+    
     # # Dict of crafting recipes (each is a dict):
-    # print('Example recipe:','craft stone_pickaxe at bench ->',Crafting['Recipes']['craft stone_pickaxe at bench'])
+    print('Example recipe:','craft stone_pickaxe at bench ->',Crafting['Recipes']['craft stone_pickaxe at bench'])
 
     # Build rules
     all_recipes = []
@@ -130,6 +149,7 @@ if __name__ == '__main__':
     # Initialize first state from initial inventory
     state = State({key: 0 for key in Crafting['Items']})
     state.update(Crafting['Initial'])
+    print(state.keys())
 
     # Search for a solution
     resulting_plan = search(graph, state, is_goal, 5, heuristic)
