@@ -1,6 +1,8 @@
 import json
 from collections import namedtuple, defaultdict, OrderedDict
 from timeit import default_timer as time
+from heapq import heappop, heappush
+import heapq
 
 Recipe = namedtuple('Recipe', ['name', 'check', 'effect', 'cost'])
 
@@ -99,7 +101,7 @@ def make_goal_checker(goal):
         # This code is used in the search process and may be called millions of times.
         goalDic = goal
         for goal_item in goalDic:
-            if state[goal_item] < goalDic[goal_item]
+            if state[goal_item] < goalDic[goal_item]:
                 return False
         return True
 
@@ -121,8 +123,6 @@ def heuristic(state):
 
 def search(graph, state, is_goal, limit, heuristic):
 
-    start_time = time()
-
     # Implement your search here! Use your heuristic here!
     # When you find a path to the goal return a list of tuples [(state, action)]
     # representing the path. Each element (tuple) of the list represents a state
@@ -132,19 +132,27 @@ def search(graph, state, is_goal, limit, heuristic):
     state_list = []
     state_list.append((source, None))
 
+    state_to_action = {}
+    state_to_action[source] = None
+
+    parent = {}
+    parent[source] = None
+
     time_from_source = {}
     time_from_source[source] = 0
 
     queue = PriorityQueue()
     queue.put(source, time_from_source[source])
 
+    start_time = time()
+
     while time() - start_time < limit and not queue.empty():
 
         current_state = queue.get()
-        state_list.append(current_state)
+        state_list.append((current_state, state_to_action[current_state]))
 
         # if current state contains goal, return list of states
-        if is_goal(current_state):
+        if is_goal:
             return state_list
 
         # Check every available next_state using for loop
@@ -152,12 +160,13 @@ def search(graph, state, is_goal, limit, heuristic):
 
             # Add time it takes to reach next_state (heuristic?)
             true_time = time_from_source[state] + time
-            if next_state not in time_from_source or true_time < time_from_source[state]:
-                time_from_source[state] = true_time
+            if next_state not in time_from_source or true_time < time_from_source[next_state]:
+                time_from_source[next_state] = true_time
+                parent[next_state] = current_state
+                state_to_action[next_state] = rule
 
             # Add state to priority queue based on time
-            queue.put(next_)
-        pass
+            queue.put((next_state, time_from_source[next_state]))
 
     # Failed to find a path
     print(time() - start_time, 'seconds.')
