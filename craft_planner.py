@@ -17,7 +17,7 @@ class PriorityQueue:
         heapq.heappush(self.elements, (priority, item))
 
     def get(self):
-        return heapq.heappop(self.elements)
+        return heapq.heappop(self.elements)[1]
 
 
 class State(OrderedDict):
@@ -54,17 +54,20 @@ def make_checker(rule):
     # the search is attempted.
 
     def check(state):
+        #print("Rule: " + str(rule))
         # This code is called by graph(state) and runs millions of times.
         # Tip: Do something with rule['Consumes'] and rule['Requires'].
-        consumableDic = rule['Consumes']
-        for consumable in consumableDic:
-            required_amount = consumableDic[consumable]
-            if state[consumable] < required_amount:
-                return False
-        requiresDic = rule['Requires']
-        for requirement in requiresDic:
-            if state[requirement] == 0:
-                return False
+        if 'Consumes' in rule:
+            consumableDic = rule['Consumes']
+            for consumable in consumableDic:
+                required_amount = consumableDic[consumable]
+                if state[consumable] < required_amount:
+                    return False
+        if 'Requires' in rule:
+            requiresDic = rule['Requires']
+            for requirement in requiresDic:
+                if state[requirement] == 0:
+                    return False
         return True
 
     return check
@@ -80,13 +83,15 @@ def make_effector(rule):
         # Tip: Do something with rule['Produces'] and rule['Consumes'].
         next_state = None
         next_state = state.copy()
-        productionDic = rule['Produces']
-        for produced_item in productionDic:
-            next_state[produced_item] += productionDic[produced_item]
+        if 'Produces' in rule:
+            productionDic = rule['Produces']
+            for produced_item in productionDic:
+                next_state[produced_item] += productionDic[produced_item]
 
-        consumeDic = rule['Consumes']
-        for consumed_item in consumeDic:
-            next_state[consumed_item] -= consumeDic[consumed_item]
+        if 'Consumes' in rule:
+            consumeDic = rule['Consumes']
+            for consumed_item in consumeDic:
+                next_state[consumed_item] -= consumeDic[consumed_item]
 
         return next_state
 
@@ -113,12 +118,15 @@ def graph(state):
     # If a rule is valid, it returns the rule's name, the resulting state after application
     # to the given state, and the cost for the rule.
     for r in all_recipes:
+        #print("R check:" + str(r.check(state)))
         if r.check(state):
             yield (r.name, r.effect(state), r.cost)
 
 
-def heuristic(state):
+def heuristic(state, rule):
     # Implement your heuristic here!
+    # If rule['Produces'] is in state['items']
+        #skip
     return 0
 
 def search(graph, state, is_goal, limit, heuristic):
@@ -145,28 +153,61 @@ def search(graph, state, is_goal, limit, heuristic):
     queue.put(source, time_from_source[source])
 
     start_time = time()
+    
 
     while time() - start_time < limit and not queue.empty():
 
+        #print("Queue: " + str(queue))
+
         current_state = queue.get()
+        #print("Current state: " + str(current_state))
+        #print("State to action: " + str(state_to_action))
         state_list.append((current_state, state_to_action[current_state]))
 
+        #print("Before is goal")
+
         # if current state contains goal, return list of states
-        if is_goal:
+        if is_goal(current_state):
             return state_list
 
         # Check every available next_state using for loop
-        for rule, next_state, time in graph(current_state):
+        iterator = graph(current_state)
 
-            # Add time it takes to reach next_state (heuristic?)
-            true_time = time_from_source[state] + time
-            if next_state not in time_from_source or true_time < time_from_source[next_state]:
-                time_from_source[next_state] = true_time
-                parent[next_state] = current_state
-                state_to_action[next_state] = rule
+        has_next = True
 
-            # Add state to priority queue based on time
-            queue.put((next_state, time_from_source[next_state]))
+        #print("BEfore while")
+        
+        while has_next:
+
+            #print("In while")
+
+            try:
+                #print("In try")
+                rule, next_state, action_time = next(iterator)
+                #print("Next state: " + str(next_state))
+
+                #Use heuristic, if rule matches conditions, skip state/rule
+                #pass
+
+                # Add time it takes to reach next_state (heuristic?)
+                true_time = time_from_source[current_state] + action_time
+                if next_state not in time_from_source or true_time < time_from_source[next_state]:
+                    #print("In if in while")
+                    time_from_source[next_state] = true_time
+                    parent[next_state] = current_state
+                    state_to_action[next_state] = rule
+
+                    # Add state to priority queue based on time
+                    queue.put(next_state, time_from_source[next_state])
+
+                rule, next_state, action_time = graph(current_state)
+                #print("Queue in while: " + str(queue))
+
+            except:
+                #print("In except")
+                has_next = False
+
+    print("State list: " + str(state_list))
 
     # Failed to find a path
     print(time() - start_time, 'seconds.')
@@ -206,7 +247,7 @@ if __name__ == '__main__':
     print(state.keys())
 
     # Search for a solution
-    resulting_plan = search(graph, state, is_goal, 5, heuristic)
+    resulting_plan = search(graph, state, is_goal, 30, heuristic)
 
     if resulting_plan:
         # Print resulting plan
