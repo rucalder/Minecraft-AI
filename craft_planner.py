@@ -123,11 +123,16 @@ def graph(state):
             yield (r.name, r.effect(state), r.cost)
 
 
-def heuristic(state, rule):
+def heuristic(state):
     # Implement your heuristic here!
     # If rule['Produces'] is in state['items']
-        #skip
-    return 0
+    #print("In heuristic")
+    #print("State items: " + str(state['bench']))
+    if state['bench'] > 1 or state['furnace'] > 1 or state['iron_axe'] > 1 or state['iron_pickaxe'] > 1 or state['stone_axe'] > 1 or state['stone_pickaxe'] > 1 or state['wooden_axe'] > 1 or state['wooden_pickaxe'] > 1:
+        return False
+    if state['coal'] > 10 or state['cobble'] > 10 or state['ingot'] > 10 or state['ore'] > 10 or state['plank'] > 10 or state['stick'] > 10 or state['wood'] > 10:
+        return False
+    return True
 
 def search(graph, state, is_goal, limit, heuristic):
 
@@ -188,20 +193,21 @@ def search(graph, state, is_goal, limit, heuristic):
 
                 #Use heuristic, if rule matches conditions, skip state/rule
                 #pass
+                if heuristic(next_state):
+                    #print("after heuristic")
+                    # Add time it takes to reach next_state (heuristic?)
+                    true_time = time_from_source[current_state] + action_time
+                    if next_state not in time_from_source or true_time < time_from_source[next_state]:
+                        #print("In if in while")
+                        time_from_source[next_state] = true_time
+                        parent[next_state] = current_state
+                        state_to_action[next_state] = rule
 
-                # Add time it takes to reach next_state (heuristic?)
-                true_time = time_from_source[current_state] + action_time
-                if next_state not in time_from_source or true_time < time_from_source[next_state]:
-                    #print("In if in while")
-                    time_from_source[next_state] = true_time
-                    parent[next_state] = current_state
-                    state_to_action[next_state] = rule
+                        # Add state to priority queue based on time
+                        queue.put(next_state, time_from_source[next_state])
 
-                    # Add state to priority queue based on time
-                    queue.put(next_state, time_from_source[next_state])
-
-                rule, next_state, action_time = graph(current_state)
-                #print("Queue in while: " + str(queue))
+                    rule, next_state, action_time = graph(current_state)
+                    #print("Queue in while: " + str(queue))
 
             except:
                 #print("In except")
