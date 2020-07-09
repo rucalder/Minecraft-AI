@@ -143,7 +143,7 @@ def search(graph, state, is_goal, limit, heuristic):
     source = state
 
     state_list = []
-    state_list.append((source, None))
+    #state_list.append((source, None))
 
     state_to_action = {}
     state_to_action[source] = None
@@ -167,12 +167,18 @@ def search(graph, state, is_goal, limit, heuristic):
         current_state = queue.get()
         #print("Current state: " + str(current_state))
         #print("State to action: " + str(state_to_action))
-        state_list.append((current_state, state_to_action[current_state]))
+        #state_list.append((current_state, state_to_action[current_state]))
 
         #print("Before is goal")
 
         # if current state contains goal, return list of states
         if is_goal(current_state):
+            temp = current_state
+            while temp != None:
+                state_list.append((temp, state_to_action[temp]))
+                temp = parent[temp]
+
+            state_list.reverse()
             return state_list
 
         # Check every available next_state using for loop
@@ -213,7 +219,7 @@ def search(graph, state, is_goal, limit, heuristic):
                 #print("In except")
                 has_next = False
 
-    print("State list: " + str(state_list))
+    #print("State list: " + str(state_list))
 
     # Failed to find a path
     print(time() - start_time, 'seconds.')
@@ -250,7 +256,7 @@ if __name__ == '__main__':
     # Initialize first state from initial inventory
     state = State({key: 0 for key in Crafting['Items']})
     state.update(Crafting['Initial'])
-    print(state.keys())
+    #print(state.keys())
 
     # Search for a solution
     resulting_plan = search(graph, state, is_goal, 30, heuristic)
