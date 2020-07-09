@@ -4,6 +4,19 @@ from timeit import default_timer as time
 
 Recipe = namedtuple('Recipe', ['name', 'check', 'effect', 'cost'])
 
+class PriorityQueue:
+    def __init__(self):
+        self.elements = []
+
+    def empty(self):
+        return len(self.elements) == 0
+
+    def put(self, item, priority):
+        heapq.heappush(self.elements, (priority, item))
+
+    def get(self):
+        return heapq.heappop(self.elements)
+
 
 class State(OrderedDict):
     """ This class is a thin wrapper around an OrderedDict, which is simply a dictionary which keeps the order in
@@ -114,7 +127,36 @@ def search(graph, state, is_goal, limit, heuristic):
     # When you find a path to the goal return a list of tuples [(state, action)]
     # representing the path. Each element (tuple) of the list represents a state
     # in the path and the action that took you to this state
-    while time() - start_time < limit:
+    source = state
+
+    state_list = []
+    state_list.append((source, None))
+
+    time_from_source = {}
+    time_from_source[source] = 0
+
+    queue = PriorityQueue()
+    queue.put(source, time_from_source[source])
+
+    while time() - start_time < limit and not queue.empty():
+
+        current_state = queue.get()
+        state_list.append(current_state)
+
+        # if current state contains goal, return list of states
+        if is_goal(current_state):
+            return state_list
+
+        # Check every available next_state using for loop
+        for rule, next_state, time in graph(current_state):
+
+            # Add time it takes to reach next_state (heuristic?)
+            true_time = time_from_source[state] + time
+            if next_state not in time_from_source or true_time < time_from_source[state]:
+                time_from_source[state] = true_time
+
+            # Add state to priority queue based on time
+            queue.put(next_)
         pass
 
     # Failed to find a path
