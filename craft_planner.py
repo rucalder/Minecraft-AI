@@ -26,7 +26,6 @@ class State(OrderedDict):
         for hashing, should you need to use a state as a key in another dictionary, e.g. distance[state] = 5. By
         default, dictionaries are not hashable. Additionally, when the state is converted to a string, it removes
         all items with quantity 0.
-
         Use of this state representation is optional, should you prefer another.
     """
 
@@ -72,6 +71,14 @@ def make_checker(rule):
 
     return check
 
+# def back_make_checker(rule):
+#     # function that returns function to determine if 
+#     if 'Produces' in rule:
+#         produced_item = rule.get('Produces', {})
+#         for item in produced_item:
+#             will_produce = [(state[item], produced_item[item])
+
+#     def back_check(state):
 
 def make_effector(rule):
     # Implement a function that returns a function which transitions from state to
@@ -112,6 +119,15 @@ def make_goal_checker(goal):
 
     return is_goal
 
+def make_initial_checker(initial):
+    def is_initial(state):
+        initialDict = initial
+        for initial_item in initialDict:
+            if state[initial_item] > initialDict[initial_item]:
+                return False
+            else:
+                return True
+    return is_initial
 
 def graph(state):
     # Iterates through all recipes/rules, checking which are valid in the given state.
@@ -273,3 +289,5 @@ if __name__ == '__main__':
 
         print("Cost: " + str(cost))
         print("Length: " + str(len(resulting_plan)))
+
+        
