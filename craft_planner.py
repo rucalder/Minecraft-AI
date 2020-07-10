@@ -123,15 +123,19 @@ def graph(state):
             yield (r.name, r.effect(state), r.cost)
 
 
-def heuristic(state):
+def heuristic(state, prev_state):
     # Implement your heuristic here!
     # If rule['Produces'] is in state['items']
     #print("In heuristic")
     #print("State items: " + str(state['bench']))
-    if state['bench'] > 1 or state['furnace'] > 1 or state['iron_axe'] > 1 or state['iron_pickaxe'] > 1 or state['stone_axe'] > 1 or state['stone_pickaxe'] > 1 or state['wooden_axe'] > 1 or state['wooden_pickaxe'] > 1:
+    if state['bench'] > 1 or state['furnace'] > 1 or state['iron_axe'] > 1 or state['iron_pickaxe'] > 1 or state['stone_axe'] > 1 or state['stone_pickaxe'] > 1 or state['wooden_axe'] > 1 or state['wooden_pickaxe'] > 1 or state['cart'] > 1:
         return False
-    if state['coal'] > 10 or state['cobble'] > 10 or state['ingot'] > 10 or state['ore'] > 10 or state['plank'] > 10 or state['stick'] > 10 or state['wood'] > 10:
+    if state['coal'] > 1 or state['cobble'] > 10 or state['ingot'] > 10 or state['ore'] > 1 or state['plank'] > 8 or state['stick'] > 5 or state['wood'] > 2:
         return False
+    if state['bench'] == 0 and state['plank'] > 7:
+        return False
+    #if prev_state['ore'] > 0 and  prev_state['coal'] > 0 and prev_state['furnace'] > 0 and state['ingot'] == prev_state['ingot']:
+    #    return False
     return True
 
 def search(graph, state, is_goal, limit, heuristic):
@@ -179,7 +183,7 @@ def search(graph, state, is_goal, limit, heuristic):
                 temp = parent[temp]
 
             state_list.reverse()
-            return state_list
+            return state_list, time_from_source[current_state]
 
         # Check every available next_state using for loop
         iterator = graph(current_state)
@@ -199,7 +203,7 @@ def search(graph, state, is_goal, limit, heuristic):
 
                 #Use heuristic, if rule matches conditions, skip state/rule
                 #pass
-                if heuristic(next_state):
+                if heuristic(next_state, current_state):
                     #print("after heuristic")
                     # Add time it takes to reach next_state (heuristic?)
                     true_time = time_from_source[current_state] + action_time
@@ -259,10 +263,13 @@ if __name__ == '__main__':
     #print(state.keys())
 
     # Search for a solution
-    resulting_plan = search(graph, state, is_goal, 30, heuristic)
+    resulting_plan, cost = search(graph, state, is_goal, 30, heuristic)
 
     if resulting_plan:
         # Print resulting plan
         for state, action in resulting_plan:
             print('\t',state)
             print(action)
+
+        print("Cost: " + str(cost))
+        print("Length: " + str(len(resulting_plan)))
